@@ -1,0 +1,10 @@
+server:
+  service:
+    - name: file_transfer
+      ip: 0.0.0.0
+      port: 8000
+      protocol: trpc
+      network: tcp
+
+client:
+  timeout: 600000  # 10分钟超时
