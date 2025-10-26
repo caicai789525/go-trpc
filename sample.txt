@@ -6,7 +6,7 @@ If you see this content on the server side, it means the experiment was a succes
 这是一个用于流式文件传输实验的示例文本。
 如果你在服务端看到了这个文件的内容，说明实验成功了！
 
-学号:2323214376 姓名:文孟輘
+学号:2323214375 姓名:蔡宗谚
 
 行号 1
 行号 2
