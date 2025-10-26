@@ -37,8 +37,8 @@ func init() {
 func (s *FileTransferServiceImpl) SyncToServer2(filename string) error {
 	localFilePath := filepath.Join(uploadDir, filename)
 
-	if err := s.transfer.SyncFileToServer(localFilePath, "localhost:8001", filename); err != nil {
-		return fmt.Errorf("同步到服务器2失败: %v", err)
+	if err := s.transfer.SyncFileToServer(localFilePath, "39.96.188.155:8001", filename); err != nil {
+		return fmt.Errorf("同步到39.96.188.155失败: %v", err)
 	}
 	return nil
 }
@@ -46,8 +46,8 @@ func (s *FileTransferServiceImpl) SyncToServer2(filename string) error {
 func (s *FileTransferServiceImpl) DownloadFromServer2(filename string) error {
 	localSavePath := filepath.Join(uploadDir, "from_server2_"+filename)
 
-	if err := s.transfer.DownloadFileFromServer("localhost:8001", filename, localSavePath); err != nil {
-		return fmt.Errorf("从服务器2下载失败: %v", err)
+	if err := s.transfer.DownloadFileFromServer("39.96.188.155:8001", filename, localSavePath); err != nil {
+		return fmt.Errorf("39.96.188.155下载失败: %v", err)
 	}
 	return nil
 }

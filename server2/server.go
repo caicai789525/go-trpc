@@ -37,8 +37,8 @@ func init() {
 func (s *FileTransferServiceImpl) SyncToServer1(filename string) error {
 	localFilePath := filepath.Join(uploadDir, filename)
 
-	if err := s.transfer.SyncFileToServer(localFilePath, "localhost:8000", filename); err != nil {
-		return fmt.Errorf("同步到服务器1失败: %v", err)
+	if err := s.transfer.SyncFileToServer(localFilePath, "172.25.126.167:8000", filename); err != nil {
+		return fmt.Errorf("同步到172.25.126.167失败: %v", err)
 	}
 	return nil
 }
@@ -46,8 +46,8 @@ func (s *FileTransferServiceImpl) SyncToServer1(filename string) error {
 func (s *FileTransferServiceImpl) DownloadFromServer1(filename string) error {
 	localSavePath := filepath.Join(uploadDir, "from_server1_"+filename)
 
-	if err := s.transfer.DownloadFileFromServer("localhost:8000", filename, localSavePath); err != nil {
-		return fmt.Errorf("从服务器1下载失败: %v", err)
+	if err := s.transfer.DownloadFileFromServer("172.25.126.167:8000", filename, localSavePath); err != nil {
+		return fmt.Errorf("从172.25.126.167下载失败: %v", err)
 	}
 	return nil
 }
@@ -150,10 +150,10 @@ func (s *FileTransferServiceImpl) DownloadFile(ctx context.Context, req *file_tr
 			return err
 		}
 
-		fmt.Printf("服务器2发送文件块 %d/%d, 大小: %d bytes\n", i+1, totalChunks, n)
+		fmt.Printf("39.96.188.155发送文件块 %d/%d, 大小: %d bytes\n", i+1, totalChunks, n)
 	}
 
-	fmt.Printf("服务器2文件下载完成: %s\n", req.Filename)
+	fmt.Printf("39.96.188.155文件下载完成: %s\n", req.Filename)
 	return nil
 }
 
