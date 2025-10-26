@@ -13,8 +13,9 @@ func main() {
 
 	// 选择服务器
 	fmt.Println("选择要连接的服务器:")
-	fmt.Println("1. 服务器1 (localhost:8000)")
-	fmt.Println("2. 服务器2 (localhost:8001)")
+	fmt.Println("1. 服务器1 (39.96.188.155:8000)")
+	fmt.Println("2. 服务器2 (172.25.112.0:8001)")
+	fmt.Println("3. 自定义服务器地址")
 	fmt.Print("请选择: ")
 
 	scanner.Scan()
@@ -23,12 +24,16 @@ func main() {
 	var serverAddr string
 	switch serverChoice {
 	case "1":
-		serverAddr = "localhost:8000"
+		serverAddr = "39.96.188.155:8000"
 	case "2":
-		serverAddr = "localhost:8001"
+		serverAddr = "172.25.112.0:8001"
+	case "3":
+		fmt.Print("请输入服务器地址 (格式: IP:端口): ")
+		scanner.Scan()
+		serverAddr = strings.TrimSpace(scanner.Text())
 	default:
 		fmt.Println("无效选择，默认连接到服务器1")
-		serverAddr = "localhost:8000"
+		serverAddr = "39.96.188.155:8000"
 	}
 
 	client := NewFileTransferClient(serverAddr)
@@ -87,7 +92,7 @@ func main() {
 			fmt.Print("请输入要同步的文件名: ")
 			scanner.Scan()
 			filename := strings.TrimSpace(scanner.Text())
-			fmt.Print("请输入目标服务器 (localhost:8000 或 localhost:8001): ")
+			fmt.Print("请输入目标服务器地址 (格式: IP:端口): ")
 			scanner.Scan()
 			targetServer := strings.TrimSpace(scanner.Text())
 			if err := client.SyncBetweenServers(filename, targetServer); err != nil {
@@ -96,16 +101,21 @@ func main() {
 
 		case "6":
 			fmt.Println("选择要连接的服务器:")
-			fmt.Println("1. 服务器1 (localhost:8000)")
-			fmt.Println("2. 服务器2 (localhost:8001)")
+			fmt.Println("1. 服务器1 (39.96.188.155:8000)")
+			fmt.Println("2. 服务器2 (172.25.112.0:8001)")
+			fmt.Println("3. 自定义服务器地址")
 			fmt.Print("请选择: ")
 			scanner.Scan()
 			newChoice := strings.TrimSpace(scanner.Text())
 			switch newChoice {
 			case "1":
-				serverAddr = "localhost:8000"
+				serverAddr = "39.96.188.155:8000"
 			case "2":
-				serverAddr = "localhost:8001"
+				serverAddr = "172.25.112.0:8001"
+			case "3":
+				fmt.Print("请输入服务器地址 (格式: IP:端口): ")
+				scanner.Scan()
+				serverAddr = strings.TrimSpace(scanner.Text())
 			default:
 				fmt.Println("无效选择，保持当前服务器")
 			}
