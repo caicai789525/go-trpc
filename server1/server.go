@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"../stub/file_transfer"
+	"trpc-go-file-transfer/stub/file_transfer"
 
 	"trpc.group/trpc-go/trpc-go/errs"
 )
