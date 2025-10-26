@@ -1,0 +1,16 @@
+Hello, tRPC-Cpp!
+
+This is a sample file for the streaming file transfer experiment.
+If you see this content on the server side, it means the experiment was a success.
+
+这是一个用于流式文件传输实验的示例文本。
+如果你在服务端看到了这个文件的内容，说明实验成功了！
+
+学号:2323214376 姓名:文孟輘
+
+行号 1
+行号 2
+行号 3
+...
+行号 100
+文件结束。
