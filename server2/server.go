@@ -12,28 +12,47 @@ import (
 
 	"trpc-go-file-transfer/stub/file_transfer"
 
-	"trpc.group/trpc-go/trpc-go"
 	"trpc.group/trpc-go/trpc-go/errs"
 )
 
 const (
-	uploadDir   = "./uploads"
-	chunkSize   = 64 * 1024         // 64KB
-	maxFileSize = 100 * 1024 * 1024 // 100MB
+	uploadDir   = "./uploads_server2"
+	chunkSize   = 64 * 1024
+	maxFileSize = 100 * 1024 * 1024
 )
 
 type FileTransferServiceImpl struct {
 	fileMutex sync.Mutex
+	transfer  *file_transfer.ServerTransfer
 }
 
-// 初始化上传目录
+// 初始化
 func init() {
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		log.Fatalf("创建上传目录失败: %v", err)
 	}
 }
 
-// UploadFile 文件上传
+// 服务器间传输方法
+func (s *FileTransferServiceImpl) SyncToServer1(filename string) error {
+	localFilePath := filepath.Join(uploadDir, filename)
+
+	if err := s.transfer.SyncFileToServer(localFilePath, "localhost:8000", filename); err != nil {
+		return fmt.Errorf("同步到服务器1失败: %v", err)
+	}
+	return nil
+}
+
+func (s *FileTransferServiceImpl) DownloadFromServer1(filename string) error {
+	localSavePath := filepath.Join(uploadDir, "from_server1_"+filename)
+
+	if err := s.transfer.DownloadFileFromServer("localhost:8000", filename, localSavePath); err != nil {
+		return fmt.Errorf("从服务器1下载失败: %v", err)
+	}
+	return nil
+}
+
+// 文件传输方法
 func (s *FileTransferServiceImpl) UploadFile(stream file_transfer.FileTransfer_UploadFileServer) error {
 	var file *os.File
 	var receivedBytes int64
@@ -49,12 +68,10 @@ func (s *FileTransferServiceImpl) UploadFile(stream file_transfer.FileTransfer_U
 			return err
 		}
 
-		// 第一次接收，创建文件
 		if file == nil {
 			filename = chunk.Filename
 			totalChunks = chunk.TotalChunks
 
-			// 安全检查文件名
 			if !isSafeFilename(filename) {
 				return errs.New(400, "文件名不安全")
 			}
@@ -67,14 +84,13 @@ func (s *FileTransferServiceImpl) UploadFile(stream file_transfer.FileTransfer_U
 			defer file.Close()
 		}
 
-		// 写入文件块
 		n, err := file.Write(chunk.Content)
 		if err != nil {
 			return errs.New(500, "写入文件失败: "+err.Error())
 		}
 		receivedBytes += int64(n)
 
-		fmt.Printf("接收文件块 %d/%d, 大小: %d bytes\n",
+		fmt.Printf("服务器2接收文件块 %d/%d, 大小: %d bytes\n",
 			chunk.ChunkIndex+1, totalChunks, len(chunk.Content))
 	}
 
@@ -87,14 +103,11 @@ func (s *FileTransferServiceImpl) UploadFile(stream file_transfer.FileTransfer_U
 		return err
 	}
 
-	fmt.Printf("文件上传完成: %s, 总大小: %d bytes\n", filename, receivedBytes)
+	fmt.Printf("服务器2文件上传完成: %s, 总大小: %d bytes\n", filename, receivedBytes)
 	return nil
 }
 
-// DownloadFile 文件下载
-func (s *FileTransferServiceImpl) DownloadFile(req *file_transfer.FileRequest,
-	stream file_transfer.FileTransfer_DownloadFileServer) error {
-
+func (s *FileTransferServiceImpl) DownloadFile(ctx context.Context, req *file_transfer.FileRequest, stream file_transfer.FileTransfer_DownloadFileServer) error {
 	if !isSafeFilename(req.Filename) {
 		return errs.New(400, "文件名不安全")
 	}
@@ -137,14 +150,13 @@ func (s *FileTransferServiceImpl) DownloadFile(req *file_transfer.FileRequest,
 			return err
 		}
 
-		fmt.Printf("发送文件块 %d/%d, 大小: %d bytes\n", i+1, totalChunks, n)
+		fmt.Printf("服务器2发送文件块 %d/%d, 大小: %d bytes\n", i+1, totalChunks, n)
 	}
 
-	fmt.Printf("文件下载完成: %s\n", req.Filename)
+	fmt.Printf("服务器2文件下载完成: %s\n", req.Filename)
 	return nil
 }
 
-// ListFiles 列出所有文件
 func (s *FileTransferServiceImpl) ListFiles(ctx context.Context, empty *file_transfer.Empty) (*file_transfer.FileList, error) {
 	entries, err := os.ReadDir(uploadDir)
 	if err != nil {
@@ -161,7 +173,6 @@ func (s *FileTransferServiceImpl) ListFiles(ctx context.Context, empty *file_tra
 	return &file_transfer.FileList{Files: files}, nil
 }
 
-// DeleteFile 删除文件
 func (s *FileTransferServiceImpl) DeleteFile(ctx context.Context, req *file_transfer.FileRequest) (*file_transfer.OperationResponse, error) {
 	s.fileMutex.Lock()
 	defer s.fileMutex.Unlock()
@@ -184,7 +195,6 @@ func (s *FileTransferServiceImpl) DeleteFile(ctx context.Context, req *file_tran
 	}, nil
 }
 
-// 安全检查文件名
 func isSafeFilename(filename string) bool {
 	if filename == "" || strings.Contains(filename, "..") ||
 		strings.Contains(filename, "/") || strings.Contains(filename, "\\") {

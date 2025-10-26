@@ -16,23 +16,24 @@ import (
 )
 
 const (
-	serverAddress = "localhost:8000"
-	chunkSize     = 64 * 1024 // 64KB
+	chunkSize = 64 * 1024 // 64KB
 )
 
 type FileTransferClient struct {
 	client file_transfer.FileTransferClient
+	server string
 }
 
-func NewFileTransferClient() *FileTransferClient {
+func NewFileTransferClient(serverAddr string) *FileTransferClient {
 	opts := []client.Option{
-		client.WithTarget("ip://" + serverAddress),
+		client.WithTarget("ip://" + serverAddr),
 		client.WithTransport(transport.NewClientTransport("tcp")),
 		client.WithTimeout(time.Minute * 10),
 	}
 
 	return &FileTransferClient{
 		client: file_transfer.NewFileTransferClientProxy(opts...),
+		server: serverAddr,
 	}
 }
 
@@ -81,8 +82,8 @@ func (c *FileTransferClient) UploadFile(filePath string) error {
 			return fmt.Errorf("发送文件块失败: %v", err)
 		}
 
-		fmt.Printf("上传进度: %d/%d (%.2f%%)\n",
-			i+1, totalChunks, float64(i+1)/float64(totalChunks)*100)
+		fmt.Printf("上传到服务器 %s 进度: %d/%d (%.2f%%)\n",
+			c.server, i+1, totalChunks, float64(i+1)/float64(totalChunks)*100)
 	}
 
 	response, err := stream.CloseAndRecv()
@@ -91,8 +92,8 @@ func (c *FileTransferClient) UploadFile(filePath string) error {
 	}
 
 	if response.Success {
-		fmt.Printf("上传成功! 文件路径: %s, 文件大小: %d bytes\n",
-			response.FilePath, response.FileSize)
+		fmt.Printf("上传成功! 服务器: %s, 文件路径: %s, 文件大小: %d bytes\n",
+			c.server, response.FilePath, response.FileSize)
 	} else {
 		fmt.Printf("上传失败: %s\n", response.Message)
 	}
@@ -134,12 +135,12 @@ func (c *FileTransferClient) DownloadFile(filename, savePath string) error {
 		receivedBytes += int64(n)
 		totalChunks = chunk.TotalChunks
 
-		fmt.Printf("下载进度: %d/%d (%.2f%%)\n",
-			chunk.ChunkIndex+1, totalChunks,
+		fmt.Printf("从服务器 %s 下载进度: %d/%d (%.2f%%)\n",
+			c.server, chunk.ChunkIndex+1, totalChunks,
 			float64(chunk.ChunkIndex+1)/float64(totalChunks)*100)
 	}
 
-	fmt.Printf("下载完成! 文件保存到: %s, 总大小: %d bytes\n", savePath, receivedBytes)
+	fmt.Printf("下载完成! 服务器: %s, 文件保存到: %s, 总大小: %d bytes\n", c.server, savePath, receivedBytes)
 	return nil
 }
 
@@ -151,7 +152,7 @@ func (c *FileTransferClient) ListFiles() error {
 		return fmt.Errorf("获取文件列表失败: %v", err)
 	}
 
-	fmt.Println("服务器上的文件列表:")
+	fmt.Printf("服务器 %s 上的文件列表:\n", c.server)
 	if len(fileList.Files) == 0 {
 		fmt.Println("  暂无文件")
 		return nil
@@ -178,5 +179,24 @@ func (c *FileTransferClient) DeleteFile(filename string) error {
 		fmt.Printf("文件删除失败: %s\n", response.Message)
 	}
 
+	return nil
+}
+
+// SyncBetweenServers 服务器间同步
+func (c *FileTransferClient) SyncBetweenServers(filename, targetServer string) error {
+	// 先下载文件
+	tempPath := "./temp_sync_" + filename
+	if err := c.DownloadFile(filename, tempPath); err != nil {
+		return fmt.Errorf("下载文件失败: %v", err)
+	}
+	defer os.Remove(tempPath)
+
+	// 上传到目标服务器
+	targetClient := NewFileTransferClient(targetServer)
+	if err := targetClient.UploadFile(tempPath); err != nil {
+		return fmt.Errorf("上传到目标服务器失败: %v", err)
+	}
+
+	fmt.Printf("文件同步成功: %s -> %s\n", c.server, targetServer)
 	return nil
 }

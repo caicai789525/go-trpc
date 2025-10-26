@@ -9,16 +9,39 @@ import (
 )
 
 func main() {
-	client := NewFileTransferClient()
 	scanner := bufio.NewScanner(os.Stdin)
 
+	// 选择服务器
+	fmt.Println("选择要连接的服务器:")
+	fmt.Println("1. 服务器1 (localhost:8000)")
+	fmt.Println("2. 服务器2 (localhost:8001)")
+	fmt.Print("请选择: ")
+
+	scanner.Scan()
+	serverChoice := strings.TrimSpace(scanner.Text())
+
+	var serverAddr string
+	switch serverChoice {
+	case "1":
+		serverAddr = "localhost:8000"
+	case "2":
+		serverAddr = "localhost:8001"
+	default:
+		fmt.Println("无效选择，默认连接到服务器1")
+		serverAddr = "localhost:8000"
+	}
+
+	client := NewFileTransferClient(serverAddr)
+
 	for {
-		fmt.Println("\n=== 文件传输客户端 ===")
+		fmt.Printf("\n=== 文件传输客户端 (服务器: %s) ===\n", serverAddr)
 		fmt.Println("1. 上传文件")
 		fmt.Println("2. 下载文件")
 		fmt.Println("3. 列出文件")
 		fmt.Println("4. 删除文件")
-		fmt.Println("5. 退出")
+		fmt.Println("5. 服务器间同步文件")
+		fmt.Println("6. 切换服务器")
+		fmt.Println("7. 退出")
 		fmt.Print("请选择操作: ")
 
 		if !scanner.Scan() {
@@ -61,6 +84,35 @@ func main() {
 			}
 
 		case "5":
+			fmt.Print("请输入要同步的文件名: ")
+			scanner.Scan()
+			filename := strings.TrimSpace(scanner.Text())
+			fmt.Print("请输入目标服务器 (localhost:8000 或 localhost:8001): ")
+			scanner.Scan()
+			targetServer := strings.TrimSpace(scanner.Text())
+			if err := client.SyncBetweenServers(filename, targetServer); err != nil {
+				log.Printf("同步失败: %v", err)
+			}
+
+		case "6":
+			fmt.Println("选择要连接的服务器:")
+			fmt.Println("1. 服务器1 (localhost:8000)")
+			fmt.Println("2. 服务器2 (localhost:8001)")
+			fmt.Print("请选择: ")
+			scanner.Scan()
+			newChoice := strings.TrimSpace(scanner.Text())
+			switch newChoice {
+			case "1":
+				serverAddr = "localhost:8000"
+			case "2":
+				serverAddr = "localhost:8001"
+			default:
+				fmt.Println("无效选择，保持当前服务器")
+			}
+			client = NewFileTransferClient(serverAddr)
+			fmt.Printf("已切换到服务器: %s\n", serverAddr)
+
+		case "7":
 			fmt.Println("再见!")
 			return
 

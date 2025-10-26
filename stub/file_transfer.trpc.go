@@ -2,10 +2,15 @@ package file_transfer
 
 import (
 	"context"
+	"io"
+	"os"
+	"path/filepath"
 
 	"trpc.group/trpc-go/trpc-go/client"
 	"trpc.group/trpc-go/trpc-go/server"
 )
+
+const chunkSize = 64 * 1024 // 64KB
 
 // 服务端接口
 type FileTransferService interface {
