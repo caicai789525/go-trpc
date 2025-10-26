@@ -12,7 +12,7 @@ import (
 	"trpc.group/trpc-go/trpc-go/client"
 	"trpc.group/trpc-go/trpc-go/transport"
 
-	"trpc-go-file-transfer/stub/file_transfer"
+	"../stub/file_transfer"
 )
 
 const (

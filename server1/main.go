@@ -6,7 +6,7 @@ import (
 	"trpc.group/trpc-go/trpc-go"
 	"trpc.group/trpc-go/trpc-go/server"
 
-	"trpc-go-file-transfer/stub/file_transfer"
+	"../stub/file_transfer"
 )
 
 func main() {
